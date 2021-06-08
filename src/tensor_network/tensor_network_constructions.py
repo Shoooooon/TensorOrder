@@ -1,12 +1,29 @@
+from util.ising_model import IsingModel
 from util import Formula
 from tensor_network.tensor_network import TensorNetwork
 from tensor_network.tensor import Tensor
 from collections import Counter
 
+def ising_count_dummy_test(benchmark):
+    # For now, discard the benchmark
+    ising = IsingModel(1, 1, [[0]])
+    return ising.toWMC()
+    # return ising_count(ising).tensors.__next__()
 
-def cnf_count(dimacs_file):
+def ising_count(ising):
+    return cnf_count(ising.toWMC())
+
+def cnf_count_from_dimacs(dimacs_file):
+    """
+    Constructs a tensor network from a CNF formula specified by a DIMACS file
+    """
     formula = Formula.parse_DIMACS(dimacs_file, include_missing_vars=False)
+    return cnf_count(formula)
 
+def cnf_count(formula):
+    """
+    Constructs a tensor network from a CNF formula
+    """
     network = TensorNetwork()
 
     # Count the number of occurrences of each variable.
@@ -127,4 +144,4 @@ class VariableTensor(Tensor):
         return left, right
 
 
-ALL_CONSTRUCTIONS = {"wmc": cnf_count}
+ALL_CONSTRUCTIONS = {"wmc": cnf_count_from_dimacs, "ising": ising_count_dummy_test}
