@@ -6,8 +6,8 @@ from util.boolean_formula import Formula
 class IsingModel:
     def __init__(self, beta = 1, mu = 1, interactions = []):
         self._numLatticeSites = len(interactions)
-        self._beta = 1              # Inverse temperature
-        self._mu = 1                # Field orientation
+        self._beta = beta              # Inverse temperature
+        self._mu = mu                # Field orientation
         self._interactions = interactions     # A square upper triangular matrix - diagonal entries are h, others are J
 
     def toWMC(self):
@@ -42,32 +42,34 @@ class IsingModel:
 
         ### PREAMBLE
         # First part of preamble
-        write(out, "ISING\n")
-        write(out, str(self._numLatticeSites) + "\n")
-        write(out, "2 " * (self._numLatticeSites - 1) + "2\n")
-        write(out, str(self.numUnaryFuncs()) + " " + str(self.numBinaryFuncs()) + "\n")
+        out.write("ISING\n")
+        out.write(str(self._numLatticeSites) + "\n")
+        out.write("2 " * (self._numLatticeSites - 1) + "2\n")
+        out.write(str(self.numUnaryFuncs()) + " " + str(self.numBinaryFuncs()) + " " + str(self._beta) + " " + str(self._mu) + "\n")
 
         # Write function inputs part of preamble 
         for i in range(self._numLatticeSites):
             if self._interactions[i][i] != 0:
-                write(out, "1 " + str(i) + "\n")
+                out.write("1 " + str(i) + "\n")
         for i in range(self._numLatticeSites):
             for j in range(i + 1, self._numLatticeSites):
                 if self._interactions[i][j] != 0:
-                    write(out, "2 " + str(i) + " " + str(j) + "\n")
+                    out.write("2 " + str(i) + " " + str(j) + "\n")
 
-        write("\n")
+        out.write("\n")
         # FUNCTION TABLE
         for i in range(self._numLatticeSites):
             if self._interactions[i][i] != 0:
-                write("2\n")
-                write(" " + str(self._interactions[i][i]) + " " + str(-self._interactions[i][i]) + "\n")
+                out.write("2\n")
+                out.write(" " + str(-self._interactions[i][i]) + " " + str(self._interactions[i][i]) + "\n")
         for i in range(self._numLatticeSites):
             for j in range(i + 1, self._numLatticeSites):
                 if self._interactions[i][j] != 0:
-                    write("4\n")
-                    write(" " + str(self._interactions[i][j]) + " " + str(-self._interactions[i][j]) + "\n")
-                    write(" " + str(-self._interactions[i][j]) + " " + str(self._interactions[i][j]) + "\n")
+                    out.write("4\n")
+                    out.write(" " + str(self._interactions[i][j]) + " " + str(-self._interactions[i][j]) + "\n")
+                    out.write(" " + str(-self._interactions[i][j]) + " " + str(self._interactions[i][j]) + "\n")
+        out.close()
+
 
     @staticmethod
     def from_UAI08(filename):
@@ -75,38 +77,49 @@ class IsingModel:
 
         ### PREAMBLE
         # Read meta-information
-        if in_model.readline() != "ISING":
+        if not in_model.readline().startswith("ISING"):
             raise Exception("Misformated file " + filename)
         numLatticeSites = int(in_model.readline())
         in_model.readline()         # Disregard line specifying variable domains
-        num_h_vals, num_J_vals = [int(i) for i in in_model.readline().split()]
-
+        # The next line may contain optional fields
+        metaline = [int(i) for i in in_model.readline().split()]
+        num_h_vals, num_J_vals = metaline[:2]
+        beta = 1
+        mu = 1
+        print(len(metaline))
+        if len(metaline) > 2:
+            beta = float(metaline[2])
+            if len(metaline) > 3:
+                mu = int(metaline[3])
+                
         # Function inputs
         nonzero_h_slots = []
         nonzero_J_slots = []
         for i in range(num_h_vals):
-            nonzero_h_slots.append(in_model.readline().split()[1])
+            nonzero_h_slots.append(int(in_model.readline().split()[1]))
         for i in range(num_J_vals):
-            nonzero_J_slots.append(in_model.readline().split()[1:])
+            nonzero_J_slots.append(tuple([int(j) for j in in_model.readline().split()[1:]]))
 
 
         in_model.readline()         # Read empty line
         ### FUNCTION TABLE
-        interactions = [[0] * numLatticeSites] * numLatticeSites
+        interactions = [[0 for i in range(numLatticeSites)] for j in range(numLatticeSites)]
         # H values
-        for i in range(nonzero_h_slots):
+        for i in nonzero_h_slots:
             if in_model.readline() != "2\n":
                 #error
                 pass
-            interactions[i][i] = float(in_model.readline().split()[0])
+            interactions[i][i] = float(in_model.readline().split()[1])
         # J values
-        for (i,j) in range(nonzero_J_slots):
+        for (i,j) in nonzero_J_slots:
             if in_model.readline() != "4\n":
                 #error
                 pass
             interactions[i][j] = float(in_model.readline().split()[0])
             in_model.readline()
-
+        
+        in_model.close()
+        return(IsingModel(beta = beta, mu = mu, interactions = interactions))
 
     def numUnaryFuncs(self):
         unaryCount = 0
