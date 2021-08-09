@@ -4,13 +4,11 @@ from tensor_network.tensor_network import TensorNetwork
 from tensor_network.tensor import Tensor
 from collections import Counter
 
-def ising_count_dummy_test(benchmark):
-    # For now, discard the benchmark
-    ising = IsingModel(1, 1, [[0]])
-    return ising.toWMC()
-    # return ising_count(ising).tensors.__next__()
+def ising_count_from_UAI08(benchmark):
+    ising = IsingModel.from_UAI08(benchmark)
+    return ising_count_by_WMC(ising)
 
-def ising_count(ising):
+def ising_count_by_WMC(ising):
     return cnf_count(ising.toWMC())
 
 def cnf_count_from_dimacs(dimacs_file):
@@ -170,4 +168,4 @@ class VariableTensor(Tensor):
         return left, right
 
 
-ALL_CONSTRUCTIONS = {"wmc": cnf_count_from_dimacs, "ising": ising_count_dummy_test}
+ALL_CONSTRUCTIONS = {"wmc": cnf_count_from_dimacs, "ising": ising_count_from_UAI08}
