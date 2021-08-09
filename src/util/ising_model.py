@@ -1,7 +1,7 @@
 from os import write
 import numpy as np
 from util.boolean_formula import Formula
-
+from itertools import chain, product
 
 class IsingModel:
     def __init__(self, beta = 1, mu = 1, interactions = []):
@@ -19,13 +19,14 @@ class IsingModel:
         problem 
         """
         form = Formula()
-        varIds = [[0] * self._numLatticeSites] * self._numLatticeSites
+        varIds = [[0 for i in range(self._numLatticeSites)] for i in range(self._numLatticeSites)]
         
         # Create variables for each lattice site and each non-zero pairwise interaction between them
         for i in range(self._numLatticeSites):
             varIds[i][i] = form.fresh_variable(np.exp(-1 * self._mu * self._beta * self._interactions[i][i]), np.exp(self._mu * self._beta * self._interactions[i][i]))
             for j in range(i + 1, self._numLatticeSites):
-                varIds[i][j] = form.fresh_variable(np.exp(-1 * self._beta * self._interactions[i][j]), np.exp(self._beta * self._interactions[i][j]))
+                if self._interactions[i][j] != 0:
+                    varIds[i][j] = form.fresh_variable(np.exp(-1 * self._beta * self._interactions[i][j]), np.exp(self._beta * self._interactions[i][j]))
         
         # Add clauses for each pairwise interaction
         for i in range(self._numLatticeSites):
@@ -70,11 +71,30 @@ class IsingModel:
                     out.write(" " + str(-self._interactions[i][j]) + " " + str(self._interactions[i][j]) + "\n")
         out.close()
 
+    """
+    Outputs the Ising model as a graph in the two-file representation used by
+    https://github.com/panzhang83/catn
+    """
+    def to_pan_format(self, fileprefix):
+        # Writes nodes file to describe edges present in model
+        with open('{}nodes.txt'.format(fileprefix), "w") as graph:
+            graph.write(str(self._numLatticeSites) + " " + str(self.numBinaryFuncs()) + "\n")
+            for i in range(self._numLatticeSites):
+                for j in range(i + 1, self._numLatticeSites):
+                    if self._interactions[i][j] != 0:
+                        graph.write(str(i) + " " + str(j) + "\n")
+                            
+        # Writes Jij file to give weights of each interaction
+        Jvals = np.matrix(np.array(self._interactions))
+        with open('Jij{}nodes.txt'.format(fileprefix), "w") as Jnodes:
+            for line in Jvals:
+                np.savetxt(Jnodes, line, fmt='%.2f')
+         
+                
+
 
     @staticmethod
-    def from_UAI08(filename):
-        in_model = open(filename, "r")
-
+    def from_UAI08(in_model):
         ### PREAMBLE
         # Read meta-information
         if not in_model.readline().startswith("ISING"):
@@ -86,7 +106,6 @@ class IsingModel:
         num_h_vals, num_J_vals = metaline[:2]
         beta = 1
         mu = 1
-        print(len(metaline))
         if len(metaline) > 2:
             beta = float(metaline[2])
             if len(metaline) > 3:
@@ -136,4 +155,24 @@ class IsingModel:
                     numBinaryFuncs += 1
         return numBinaryFuncs
         
-    
+    """
+    Generates an Ising model comprised of an x by y by z grid of lattice sites with 
+    edge J values given by J(int,int)->float and h=0
+
+    f should be a symetric function giving the full strength of the interaction between the inputs
+    """        
+    @staticmethod
+    def ThreeDGrid(x, y, z, f, beta):
+        model = IsingModel(beta = beta, interactions= [[0 for j in range(x*y*z)] for i in range(x*y*z)])
+        for (i1,j1,k1) in product(range(x),range(y),range(z)):
+            for(i2,j2,k2) in product(range(x),range(y),range(z)):
+                if (i1, j1, k1) == (i2, j2, k2):
+                    continue
+                model._interactions[i1*y*z + j1*z + k1][i2*y*z + j2*z + k2] = f(i1,j1,k1,i2,j2,k2)
+        
+        # Correct for double counting
+        for i in range(len(model._interactions)):
+            for j in range(i+1, len(model._interactions)):
+                model._interactions[j][i] = 0
+
+        return model
