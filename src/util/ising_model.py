@@ -39,6 +39,48 @@ class IsingModel:
                     form.add_clause([-varIds[i][j], varIds[i][i], -varIds[j][j]])
                     form.add_clause([-varIds[i][j], -varIds[i][i], varIds[j][j]])
         return form
+    
+    def toRCMtoWMC(self):
+        """
+        Creates a weighted model counting problem whose solution
+        is the partition function of the Ising model.
+
+        Uses the Random Cluster model representation of the partition
+        function.
+
+        :return: Formula representing the weighted model counting problem
+        """
+        # Gather RC parameters
+        interactions = [
+            (i, j, Jij)
+            for i, Ji in enumerate(self._interactions)  # row i
+            for j, Jij in enumerate(Ji)                 # column j
+            if i < j and Jij != 0                       # Non zero interactions
+        ]
+        ext_field = [self._interactions[v][v] for v in range(self._numLatticeSites)]
+        p = [1 - np.exp(- 2 * self._beta * Jij) for _, _, Jij in interactions]
+
+        # Initialize formula
+        form = Formula()
+        nodeVarIds = [0] * self._numLatticeSites
+        edgeVarIds = [0] * len(interactions)
+
+        # Create variables for each site
+        for i in range(self._numLatticeSites):
+            nodeVarIds[i] = form.fresh_variable(np.exp(-1 * self._mu * self._beta * ext_field[i]),
+                                                np.exp(self._mu * self._beta * ext_field[i]))
+
+        # Create variables for each interaction
+        for e, (_, _, je) in enumerate(interactions):
+            edgeVarIds[e] = form.fresh_variable((1 - p[e]) * np.exp(self._beta * je),
+                                                 p[e] * np.exp(self._beta * je))
+
+        # Add clauses for each pairwise interaction
+        for e, (i, j, Ji) in enumerate(interactions):
+            form.add_clause([-edgeVarIds[e], -nodeVarIds[i], nodeVarIds[j]])
+            form.add_clause([-edgeVarIds[e], -nodeVarIds[j], nodeVarIds[i]])
+
+        return form
 
     def to_UAI08(self, filename):
         out = open(filename, "w")
