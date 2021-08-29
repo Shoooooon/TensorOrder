@@ -1,7 +1,9 @@
 from os import write
 import numpy as np
+import random
 from util.boolean_formula import Formula
 from itertools import chain, product
+
 
 class IsingModel:
     def __init__(self, beta = 1, mu = 1, interactions = []):
@@ -206,5 +208,24 @@ class IsingModel:
         for i in range(len(model._interactions)):
             for j in range(i+1, len(model._interactions)):
                 model._interactions[j][i] = 0
+
+        return model
+
+    """
+    Generates an Ising model as a random graph of n nodes with 
+    expected degree expDegree using the seed value seed.
+    The upper and lower bounds on J are given by JLB and JUB respectively, and J values
+    are sampled uniformly between them.
+
+    Does not include field (h = 0).
+    """        
+    @staticmethod
+    def random(n: int, expDegree: float, beta: float, JLB: float = -1, JUB: float = 1, seed: int = 0):
+        random.seed(seed)
+        model = IsingModel(beta = beta, interactions= [[0 for j in range(n)] for i in range(n)])
+        for j in range(n):
+            for i in range(j):
+                model._interactions[i][j] = random.choices([0,1], weights=(n - expDegree, expDegree), k=1)[0] * random.uniform(JLB, JUB)
+        print(model._interactions)
 
         return model
