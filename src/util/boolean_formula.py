@@ -139,6 +139,27 @@ class Formula:
                 ["%s 0\n" % " ".join(map(str, clause)) for clause in self._clauses]
             )
 
+    def write_DIMACS_weighted(self, filename):
+        """
+        Write the formula into DIMACS format.
+
+        Include variable weights in format specified by https://mccompetition.org/2020/mc_format.
+
+        :param filename: The file to write the formula.
+        :return: None
+        """
+        with open(filename, "w") as f:
+            f.write("p wcnf %d %d\n" % (len(self._variables), len(self._clauses)))
+            f.writelines(
+                ["w %d %f 0\nw %d %f 0\n" % (-var, self.literal_weight(-var), var, self.literal_weight(var)) 
+                 if self.literal_weight(-var) != 1 or self.literal_weight(var) != 1
+                 else ""
+                 for var in self._variables.keys()]
+            )
+            f.writelines(
+                ["%s 0\n" % " ".join(map(str, clause)) for clause in self._clauses]
+            )
+
     def write_ASP(self, filename):
         def literal_to_ASP(literal):
             if literal > 0:
