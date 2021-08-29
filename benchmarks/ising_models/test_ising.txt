@@ -1,3 +1,5 @@
+# This is a simple 2x2 ferromagnetic square lattice, intended
+# to serve as an example of the file format.
 ISING
 4
 2 2 2 2
