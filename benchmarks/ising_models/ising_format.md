@@ -14,9 +14,10 @@ followed by the number of pairs of lattice sites with non-zero interaction (the 
 
 For example, the following is a valid metadata section of a system with 4 lattice sites and an inverse temperature of 5:
 <pre>
+# This is a comment
 ISING
 4
-2 2 2 2
+2 2 2 2 # This is also a comment
 4 3 5
 </pre>
 ### Interaction Scopes
@@ -27,7 +28,7 @@ For example, the interaction scope section of our file might look like this:
 <pre>
 1 0
 1 1
-1 2
+1 2 # I am a comment as well
 1 3
 2 0 1
 2 0 3
@@ -61,7 +62,8 @@ A function table consistent with the example preamble above would be:
 2
  -4.0 4.0
 4
- 1.5 -1.5
+# This is an additional comment
+ 1.5 -1.5 
  -1.5 1.5
 4
  1.5 -1.5

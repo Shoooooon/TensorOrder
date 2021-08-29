@@ -90,19 +90,29 @@ class IsingModel:
             for line in Jvals:
                 np.savetxt(Jnodes, line, fmt='%.2f')
          
-                
+                  
+    '''
+    Same behavior as readline, but discards lines starting with a #
+    and parts of lines after a #
+    '''
+    @staticmethod
+    def readline_comment(input):
+        line = ""
+        while line == "":
+            line = input.readline().split("#")[0]
+        return line
 
 
     @staticmethod
     def from_UAI08(in_model):
         ### PREAMBLE
         # Read meta-information
-        if not in_model.readline().startswith("ISING"):
-            raise Exception("Misformated file " + filename)
-        numLatticeSites = int(in_model.readline())
-        in_model.readline()         # Disregard line specifying variable domains
+        if not IsingModel.readline_comment(in_model).startswith("ISING"):
+            raise Exception("Misformated file " + in_model)
+        numLatticeSites = int(IsingModel.readline_comment(in_model))
+        IsingModel.readline_comment(in_model)         # Disregard line specifying variable domains
         # The next line may contain optional fields
-        metaline = [int(i) for i in in_model.readline().split()]
+        metaline = [int(i) for i in IsingModel.readline_comment(in_model).split()]
         num_h_vals, num_J_vals = metaline[:2]
         beta = 1
         mu = 1
@@ -115,27 +125,27 @@ class IsingModel:
         nonzero_h_slots = []
         nonzero_J_slots = []
         for i in range(num_h_vals):
-            nonzero_h_slots.append(int(in_model.readline().split()[1]))
+            nonzero_h_slots.append(int(IsingModel.readline_comment(in_model).split()[1]))
         for i in range(num_J_vals):
-            nonzero_J_slots.append(tuple([int(j) for j in in_model.readline().split()[1:]]))
+            nonzero_J_slots.append(tuple([int(j) for j in IsingModel.readline_comment(in_model).split()[1:]]))
 
 
-        in_model.readline()         # Read empty line
+        IsingModel.readline_comment(in_model)         # Read empty line
         ### FUNCTION TABLE
         interactions = [[0 for i in range(numLatticeSites)] for j in range(numLatticeSites)]
         # H values
         for i in nonzero_h_slots:
-            if in_model.readline() != "2\n":
+            if IsingModel.readline_comment(in_model) != "2\n":
                 #error
                 pass
-            interactions[i][i] = float(in_model.readline().split()[1])
+            interactions[i][i] = float(IsingModel.readline_comment(in_model).split()[1])
         # J values
         for (i,j) in nonzero_J_slots:
-            if in_model.readline() != "4\n":
+            if IsingModel.readline_comment(in_model) != "4\n":
                 #error
                 pass
-            interactions[i][j] = float(in_model.readline().split()[0])
-            in_model.readline()
+            interactions[i][j] = float(IsingModel.readline_comment(in_model).split()[0])
+            IsingModel.readline_comment(in_model)
         
         in_model.close()
         return(IsingModel(beta = beta, mu = mu, interactions = interactions))
