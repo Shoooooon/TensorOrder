@@ -157,7 +157,7 @@ class IsingModel:
         
     """
     Generates an Ising model comprised of an x by y by z grid of lattice sites with 
-    edge J values given by J(int,int)->float and h=0
+    edge J values given by J(x1,y1,z1,x2,y2,z2)->float and h=0
 
     f should be a symetric function giving the full strength of the interaction between the inputs
     """        
@@ -169,6 +169,28 @@ class IsingModel:
                 if (i1, j1, k1) == (i2, j2, k2):
                     continue
                 model._interactions[i1*y*z + j1*z + k1][i2*y*z + j2*z + k2] = f(i1,j1,k1,i2,j2,k2)
+        
+        # Correct for double counting
+        for i in range(len(model._interactions)):
+            for j in range(i+1, len(model._interactions)):
+                model._interactions[j][i] = 0
+
+        return model
+
+    """
+    Generates an Ising model comprised of an x by y grid of lattice sites with 
+    edge J values given by J(x1,y1,x2,y2)->float and h=0
+
+    f should be a symetric function giving the full strength of the interaction between the inputs
+    """        
+    @staticmethod
+    def TwoDGrid(x, y, f, beta):
+        model = IsingModel(beta = beta, interactions= [[0 for j in range(x*y)] for i in range(x*y)])
+        for (i1,j1) in product(range(x),range(y)):
+            for(i2,j2) in product(range(x),range(y)):
+                if (i1, j1) == (i2, j2):
+                    continue
+                model._interactions[i1*y + j1][i2*y + j2] = f(i1,j1,i2,j2)
         
         # Correct for double counting
         for i in range(len(model._interactions)):
