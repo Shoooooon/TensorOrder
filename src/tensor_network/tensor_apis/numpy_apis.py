@@ -65,6 +65,46 @@ class NumpyAPI(BaseTensorAPI):
         return self._numpy.dtype(self._entry_type).itemsize
 
 
+class NumpyLogAPI(NumpyAPI):
+    def __init__(self):
+        super().__init__()
+        self.lognorm = 0
+
+    def get_value(self, tensor, tup):
+        return tensor.lognorm + self._numpy.log(tensor[tup])
+
+    def create_tensor(self, shape, default_value=None):
+        if default_value is None:
+            return NumpyTensorLog(0, self._numpy.empty(shape, dtype=self._entry_type))
+        else:
+            return NumpyTensorLog(0, self._numpy.full(shape, default_value, dtype=self._entry_type))
+
+    def tensordot(self, a, b, axes):
+        c = NumpyTensorLog(0, self._numpy.tensordot(a.nparray, b.nparray, axes))
+        self.normalize(c)
+        c.lognorm += a.lognorm + b.lognorm
+        return c
+
+    def normalize(self, a):
+        norm = self._numpy.amax(a.nparray)
+        if norm !=0:
+            a.nparray /= norm
+            a.lognorm += self._numpy.log(norm)
+
+class NumpyTensorLog():
+    def __init__(self, lognorm, nparray):
+        self.lognorm = lognorm
+        self.nparray = nparray
+
+    def __getitem__(self, index):
+        return self.nparray[index]
+
+    def __setitem__(self, key, value):
+        self.nparray[key] = value
+
+
+
 NUMPY_APIS = {
     "numpy": NumpyAPI,
+    "numpylog": NumpyLogAPI
 }

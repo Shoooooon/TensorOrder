@@ -24,5 +24,8 @@ class BaseTensorAPI:
             slices = itertools.islice(slices, num_slice_limit)
         for slice_network in slices:
             tensor_result = self.contract(slice_network, execution_plan.tree)
-            result += tensor_result[tuple()]
+            result += self.get_value(tensor_result, tuple())
         return result
+
+    def get_value(self, tensor, tup):
+        return tensor[tup]

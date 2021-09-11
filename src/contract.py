@@ -104,7 +104,8 @@ def run(
                             tensor_result, contract_log = tensor_library.contract(
                                 slice_network, tree, record_log
                             )
-                            result += tensor_result.get_entry(tuple())
+                            result += tensor_library.get_true_value(tensor_result, tuple())
+                            print(result)
                         break
                     except tensor_network.OutOfMemoryError:
                         if mem_limit is None:
