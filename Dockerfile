@@ -18,7 +18,7 @@ RUN apt-get clean \
 && make config shared=1 \
 && make \
 && make install \
-&& pip install click==7.1.2 numpy python-igraph networkx==2.1.0 metis turbine cython threadpoolctl
+&& pip install click numpy python-igraph networkx==2.1.0 metis turbine cython threadpoolctl jax jaxlib
 
 COPY solvers/htd-master /solvers/htd-master
 RUN cd /solvers/htd-master \
@@ -31,8 +31,7 @@ RUN cd /solvers/TCS-Meiji \
 
 COPY solvers/flow-cutter-pace17 /solvers/flow-cutter-pace17
 RUN cd /solvers/flow-cutter-pace17 \
-&& chmod +x ./build.sh \
-&& ./build.sh
+&& make
 
 COPY solvers/hicks /solvers/hicks
 RUN cd /solvers/hicks \
