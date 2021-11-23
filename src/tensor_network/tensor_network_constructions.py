@@ -11,7 +11,7 @@ def ising_count_from_UAI08(benchmark):
 def ising_count_by_WMC(ising):
     return cnf_count(ising.toWMC())
 
-def cnf_count(dimacs_file, weight_format):
+def cnf_count_from_dimacs(dimacs_file, weight_format):
     """
     Construct a tensor network from the Boolean formula
     :param dimacs_file: A handler to the file to read the formula, in DIMACS format
