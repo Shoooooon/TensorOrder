@@ -11,12 +11,16 @@ def ising_count_from_UAI08(benchmark):
 def ising_count_by_WMC(ising):
     return cnf_count(ising.toWMC())
 
-def cnf_count_from_dimacs(dimacs_file):
+def cnf_count(dimacs_file, weight_format):
     """
-    Constructs a tensor network from a CNF formula specified by a DIMACS file
+    Construct a tensor network from the Boolean formula
+    :param dimacs_file: A handler to the file to read the formula, in DIMACS format
+    :param weight_format: Format of weights
+    :return: A tensor network, whose contraction is the weighted model count of the formula
     """
-    formula = Formula.parse_DIMACS(dimacs_file, include_missing_vars=False)
+    formula = Formula.parse_DIMACS(dimacs_file, weight_format)
     return cnf_count(formula)
+
 
 def cnf_count(formula):
     """
