@@ -4,8 +4,8 @@ from tensor_network.tensor_network import TensorNetwork
 from tensor_network.tensor import Tensor
 from collections import Counter
 
-def ising_count_from_UAI08(benchmark):
-    ising = IsingModel.from_UAI08(benchmark)
+def ising_count_from_UAI08(uai08_file, *args):
+    ising = IsingModel.from_UAI08(uai08_file)
     return ising_count_by_WMC(ising)
 
 def ising_count_by_WMC(ising):
